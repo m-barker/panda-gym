@@ -202,12 +202,12 @@ class RobotTaskEnv(gym.Env):
         task (Task): The task.
         render_width (int, optional): Image width. Defaults to 720.
         render_height (int, optional): Image height. Defaults to 480.
-        render_target_position (np.ndarray, optional): Camera targeting this position, as (x, y, z).
+        render_target_position (np.ndarray, optional): Camera targetting this postion, as (x, y, z).
             Defaults to [0., 0., 0.].
         render_distance (float, optional): Distance of the camera. Defaults to 1.4.
         render_yaw (float, optional): Yaw of the camera. Defaults to 45.
         render_pitch (float, optional): Pitch of the camera. Defaults to -30.
-        render_roll (int, optional): Roll of the camera. Defaults to 0.
+        render_roll (int, optional): Rool of the camera. Defaults to 0.
     """
 
     metadata = {"render_modes": ["human", "rgb_array"]}
@@ -231,14 +231,14 @@ class RobotTaskEnv(gym.Env):
         self.robot = robot
         self.task = task
         observation, _ = self.reset()  # required for init; seed can be changed later
-        observation_shape = observation["observation"].shape
+        observation_shape = (4,)
         achieved_goal_shape = observation["achieved_goal"].shape
-        desired_goal_shape = observation["desired_goal"].shape
+        desired_goal_shape = observation["achieved_goal"].shape
         self.observation_space = spaces.Dict(
             dict(
                 observation=spaces.Box(-10.0, 10.0, shape=observation_shape, dtype=np.float32),
-                desired_goal=spaces.Box(-10.0, 10.0, shape=desired_goal_shape, dtype=np.float32),
-                achieved_goal=spaces.Box(-10.0, 10.0, shape=achieved_goal_shape, dtype=np.float32),
+                desired_goal=spaces.Box(-10.0, 10.0, shape=achieved_goal_shape, dtype=np.float32),
+                achieved_goal=spaces.Box(-10.0, 10.0, shape=desired_goal_shape, dtype=np.float32),
             )
         )
         self.action_space = self.robot.action_space
@@ -264,7 +264,7 @@ class RobotTaskEnv(gym.Env):
 
     def _get_obs(self) -> Dict[str, np.ndarray]:
         robot_obs = self.robot.get_obs().astype(np.float32)  # robot state
-        task_obs = self.task.get_obs().astype(np.float32)  # object position, velocity, etc...
+        task_obs = self.task.get_obs().astype(np.float32)  # object position, velococity, etc...
         observation = np.concatenate([robot_obs, task_obs])
         achieved_goal = self.task.get_achieved_goal().astype(np.float32)
         return {
@@ -277,7 +277,7 @@ class RobotTaskEnv(gym.Env):
         self, seed: Optional[int] = None, options: Optional[dict] = None
     ) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
         super().reset(seed=seed, options=options)
-        self.task.np_random = self.np_random
+        self.task.np_random, seed = seeding.np_random(seed)
         with self.sim.no_rendering():
             self.robot.reset()
             self.task.reset()
@@ -286,7 +286,7 @@ class RobotTaskEnv(gym.Env):
         return observation, info
 
     def save_state(self) -> int:
-        """Save the current state of the environment. Restore with `restore_state`.
+        """Save the current state of the envrionment. Restore with `restore_state`.
 
         Returns:
             int: State unique identifier.
@@ -296,7 +296,7 @@ class RobotTaskEnv(gym.Env):
         return state_id
 
     def restore_state(self, state_id: int) -> None:
-        """Restore the state associated with the unique identifier.
+        """Resotre the state associated with the unique identifier.
 
         Args:
             state_id (int): State unique identifier.
